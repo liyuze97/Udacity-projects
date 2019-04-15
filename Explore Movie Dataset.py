@@ -68,10 +68,10 @@ movie_data = pd.read_csv('./tmdb-movies.csv')
 
 #print(movie_data.head())
 #print(movie_data.tail())
-print(movie_data.sample())
+#print(movie_data.sample())
 #print(movie_data['cast'].dtypes)
 #print(movie_data['cast'].isnull())
-print(movie_data.describe())
+#print(movie_data.describe())
 print(movie_data.shape)
 
 
@@ -111,16 +111,12 @@ print(c_data.shape)
 # 
 # 要求：每一个语句只能用一行代码实现。
 
-# In[5]:
+# In[14]:
 
 
-#print(c_data['id'])
-#print(c_data['popularity'])
-#print(c_data['budget '])
-#print(c_data['runtime'])
-#print(c_data['vote_average'])
-#print(c_data.iloc[np.hstack((np.arange(1,21),np.arange(48,50)))])
-print(c_data['popularity'][50:61])
+print(c_data[['id','popularity','budget','runtime','vote_average']])
+print(c_data.loc[0:20].append(c_data.loc[48:49]))
+print(c_data['popularity'][49:60])
 
 
 # ---
@@ -176,12 +172,11 @@ c_data.groupby('director').agg({'popularity' : 'mean'}).sort_values(by = 'popula
 
 # **任务3.1：**对 `popularity` 最高的20名电影绘制其 `popularity` 值。
 
-# In[8]:
+# In[28]:
 
 
-sorted_data = c_data.sort_values(by = 'popularity', ascending = False)
-base_color = sb.color_palette()[0]
-sb.barplot(data = sorted_data.head(20), y = 'original_title',x = 'popularity', color = base_color)
+c_data.sort_values('popularity', ascending=False).head(20).plot(kind='barh', y='popularity', x='original_title', legend=False)
+plt.xlabel('popularity')
 
 
 # ---
@@ -198,19 +193,25 @@ avg_profit = np.log10(avg_revenue - avg_budget)
 plt.errorbar(x = xbins_edge[:-1], y = avg_profit)
 plt.xlabel("release_year")
 plt.ylabel("average profit(log10)")
-#纯利润在1960-1975年逐渐上升，并在1975右达到顶峰，然后一直呈下降趋势
+#纯利润在1960-1975年逐渐上升，并在1975左右达到顶峰，然后一直呈下降趋势
 
 
 # ---
 # 
 # **[选做]任务3.3：**选择最多产的10位导演（电影数量最多的），绘制他们排行前3的三部电影的票房情况，并简要进行分析。
 
-# In[10]:
+# In[98]:
 
 
-director_name = c_data.groupby(['director']).agg({'original_title' : 'count',}).sort_values(by = 'original_title', ascending = False).head(10)
-director_data = c_data.loc[c_data['director'].isin(director_name.index)].sort_values(by = 'revenue_adj', ascending = False).groupby('director')['director','revenue_adj']
-director_data.plot(x='director',y='revenue_adj')
+df = c_data.dropna(subset=['director'])
+top10_directors = df.director.value_counts()[0:10]
+print(top10_directors)
+
+df = df.loc[df.director.isin(top10_directors.keys())]
+df = df.sort_values('revenue', ascending = False).groupby('director').head(3)
+
+g = sb.FacetGrid(data = df, col = 'director', col_wrap = 3)
+g.map(plt.plot,'revenue',marker = '.')
 
 
 # ---
