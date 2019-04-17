@@ -37,7 +37,7 @@
 # 
 # 提示：记得使用 notebook 中的魔法指令 `%matplotlib inline`，否则会导致你接下来无法打印出图像。
 
-# In[2]:
+# In[1]:
 
 
 import numpy as np
@@ -83,7 +83,7 @@ print(movie_data.shape)
 # 
 # 任务：使用适当的方法来清理空值，并将得到的数据保存。
 
-# In[4]:
+# In[8]:
 
 
 c_data = movie_data.fillna(0)
@@ -111,11 +111,11 @@ print(c_data.shape)
 # 
 # 要求：每一个语句只能用一行代码实现。
 
-# In[14]:
+# In[16]:
 
 
 print(c_data[['id','popularity','budget','runtime','vote_average']])
-print(c_data.loc[0:20].append(c_data.loc[48:49]))
+print(c_data.loc[0:19].append(c_data.loc[47:48]))
 print(c_data['popularity'][49:60])
 
 
@@ -182,17 +182,21 @@ plt.xlabel('popularity')
 # ---
 # **任务3.2：**分析电影净利润（票房-成本）随着年份变化的情况，并简单进行分析。
 
-# In[9]:
+# In[30]:
 
 
-xbins_edge = np.arange(1960,2016,5)
-data_bins = pd.cut(c_data['release_year'], xbins_edge, right = False, include_lowest = True)
-avg_budget = (c_data['budget_adj'].groupby(data_bins).mean())
-avg_revenue = (c_data['revenue_adj'].groupby(data_bins).mean())
-avg_profit = np.log10(avg_revenue - avg_budget)
-plt.errorbar(x = xbins_edge[:-1], y = avg_profit)
-plt.xlabel("release_year")
-plt.ylabel("average profit(log10)")
+plt.style.use('ggplot')
+_,axes = plt.subplots(2,1,figsize = (10,10))
+movie_data['profit'] = movie_data['revenue'] - movie_data['budget']
+target_data = movie_data.groupby('release_year')['profit'].agg(['mean','sum'])
+
+#print(target_data)
+axes[0].errorbar(target_data.index, target_data['mean'])
+axes[1].errorbar(target_data.index, target_data['sum'])
+
+axes[0].set_ylabel('profit_mean')
+axes[1].set_ylabel('profit_sum')
+axes[1].set_xlabel('release year')
 #纯利润在1960-1975年逐渐上升，并在1975左右达到顶峰，然后一直呈下降趋势
 
 
@@ -200,23 +204,35 @@ plt.ylabel("average profit(log10)")
 # 
 # **[选做]任务3.3：**选择最多产的10位导演（电影数量最多的），绘制他们排行前3的三部电影的票房情况，并简要进行分析。
 
-# In[98]:
+# In[47]:
 
 
-df = c_data.dropna(subset=['director'])
+df = movie_data.dropna(subset=['director'])
 top10_directors = df.director.value_counts()[0:10]
 print(top10_directors)
 
-df = df.loc[df.director.isin(top10_directors.keys())]
+df = df.loc[df.director.isin(top10_directors.index)]
 df = df.sort_values('revenue', ascending = False).groupby('director').head(3)
+df = df.sort_values('director')
 
-g = sb.FacetGrid(data = df, col = 'director', col_wrap = 3)
-g.map(plt.plot,'revenue',marker = '.')
+fig = plt.figure(figsize = (15,10))
+ax = sb.barplot(data = df,x = 'original_title', y = 'revenue_adj', hue = 'director', dodge=False)
+plt.xticks(rotation = 90)
+plt.xlabel('original_title')
+plt.ylabel('revenue')
 
 
 # ---
 # 
 # **[选做]任务3.4：**分析1968年~2015年六月电影的数量的变化。
+
+# In[67]:
+
+
+df = movie_data.dropna(subset = ['release_date'])
+date = pd.to_datetime(df['release_date'])
+print(date)
+
 
 # ---
 # 
