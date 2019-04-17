@@ -37,7 +37,7 @@
 # 
 # 提示：记得使用 notebook 中的魔法指令 `%matplotlib inline`，否则会导致你接下来无法打印出图像。
 
-# In[1]:
+# In[2]:
 
 
 import numpy as np
@@ -226,16 +226,50 @@ plt.ylabel('revenue')
 # 
 # **[选做]任务3.4：**分析1968年~2015年六月电影的数量的变化。
 
-# In[67]:
+# In[29]:
 
 
 df = movie_data.dropna(subset = ['release_date'])
-date = pd.to_datetime(df['release_date'])
-print(date)
+df['release_date'] = pd.to_datetime(df['release_date'])
+df[df['release_date'].dt.month == 6].groupby(df['release_year']).count()   .plot(kind = 'bar', y = 'id',figsize = (15,10),legend = False)
+plt.ylabel('movie counts')
 
 
 # ---
 # 
 # **[选做]任务3.5：**分析1968年~2015年六月电影 `Comedy` 和 `Drama` 两类电影的数量的变化。
+
+# In[44]:
+
+
+# 获取所有的电影类型
+df = movie_data
+all_genre = set()
+for i in df['genres'].unique():
+  if isinstance(i,str):
+      all_genre = all_genre.union([g for g in i.split('|')])
+disp = pd.DataFrame(columns=['genres'])
+
+# 分析时间戳
+df['release_date'] = (pd.to_datetime(df['release_date']))
+#统计对应的类别
+for i,j in df[df['release_date'].dt.month==6].groupby(df['release_date'].dt.year):
+  tmp_genre = {}
+  for i in j['genres']:
+      if not isinstance(i,str):
+          continue
+      for g in i.split('|'):
+          tmp_genre[g] = tmp_genre.get(g, 0)+1
+  cat = pd.DataFrame.from_dict(tmp_genre,orient='index').T
+  cat.index = [j['release_date'].dt.year.values[0]]
+  disp = disp.append(cat)
+
+# 展示变化
+disp = disp.fillna(0)
+disp.loc[1968:2016,['Comedy', 'Drama']].plot()
+plt.xlabel('year')
+plt.ylabel('numer of moives')
+plt.title('Change in number of moives in June since 1968 to 2015')
+
 
 # > 注意: 当你写完了所有的代码，并且回答了所有的问题。你就可以把你的 iPython Notebook 导出成 HTML 文件。你可以在菜单栏，这样导出**File -> Download as -> HTML (.html)、Python (.py)** 把导出的 HTML、python文件 和这个 iPython notebook 一起提交给审阅者。
